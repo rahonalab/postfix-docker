@@ -1,0 +1,15 @@
+version: "2"
+services:
+  postfix:
+     image: rahonabe/docker-postfix
+     hostname: <yourhostnamehere>
+     domainname: <yourdomainhere>
+     environment:
+      - MYORIGIN=<youroriginhere>
+      - MYNETWORKS=<ipofyournetworkcontainer>
+     build: 
+      context: .
+networks:
+  default:
+    external:
+      name: yournetworkcontainers

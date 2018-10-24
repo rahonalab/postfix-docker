@@ -15,19 +15,13 @@ postconf -e smtputf8_enable=no
 # Update aliases database. It's not used, but postfix complains if the .db file is missing
 postalias /etc/postfix/aliases
 
-# Disable local mail delivery
-postconf -e mydestination=
-# Don't relay for any domains
-postconf -e relay_domains=
 
 # As this is a server-based service, allow any message size -- we hope the server knows
 # what it is doing
 postconf -e "message_size_limit=0"
 
-# Reject invalid HELOs
-postconf -e smtpd_delay_reject=yes
-postconf -e smtpd_helo_required=yes
-postconf -e "smtpd_helo_restrictions=permit_mynetworks,reject_invalid_helo_hostname,permit"
+postconf -e myorigin="$MYORIGIN"
+
 
 # Set up host name
 if [ ! -z "$HOSTNAME" ]; then
@@ -73,29 +67,9 @@ fi
 
 if [ ! -z "$MYNETWORKS" ]; then
 	postconf -e mynetworks=$MYNETWORKS
+	postconf -e smtpd_sender_restrictions=permit_mynetworks
 else
 	postconf -e "mynetworks=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
-fi
-
-# Split with space
-if [ ! -z "$ALLOWED_SENDER_DOMAINS" ]; then
-	echo -n "- Setting up allowed SENDER domains:"
-	allowed_senders=/etc/postfix/allowed_senders
-	rm -f $allowed_senders $allowed_senders.db > /dev/null
-	touch $allowed_senders
-	for i in $ALLOWED_SENDER_DOMAINS; do
-		echo -n " $i"
-		echo -e "$i\tOK" >> $allowed_senders
-	done
-	echo
-	postmap $allowed_senders
-
-	postconf -e "smtpd_restriction_classes=allowed_domains_only"
-	postconf -e "allowed_domains_only=permit_mynetworks, reject_non_fqdn_sender reject"
-	postconf -e "smtpd_recipient_restrictions=reject_non_fqdn_recipient, reject_unknown_recipient_domain, reject_unverified_recipient, check_sender_access hash:$allowed_senders, reject"
-else
-	postconf -# "smtpd_restriction_classes"
-	postconf -e "smtpd_recipient_restrictions=reject_non_fqdn_recipient,reject_unknown_recipient_domain,reject_unverified_recipient"
 fi
 
 # Use 587 (submission)
