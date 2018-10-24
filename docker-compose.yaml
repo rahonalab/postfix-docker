@@ -1,7 +1,7 @@
 version: "2"
 services:
   postfix:
-     image: rahonabe/docker-postfix
+     image: rahonabe/postfix
      hostname: <yourhostnamehere>
      domainname: <yourdomainhere>
      environment:
